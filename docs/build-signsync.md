@@ -1,0 +1,122 @@
+# Build Guide (BUILD)
+
+**Project:** SignSync
+**Date:** 2026-10-12
+**Version:** 0.1
+**Owner:** Xander
+**Status:** Draft
+**Last reconciled:** N/A
+
+---
+
+## 1. How to Build From These Docs
+
+Read in this order:
+
+1. [state.md](state.md) for what is in and what was left out.
+2. [prd-signsync.md](prd-signsync.md) for PRD-F1 through PRD-F5 and US-1 through US-5.
+3. [sdd-signsync.md](sdd-signsync.md) for ingest, failure modes, and the sentence path.
+4. [rfc-signsync-face-drop.md](rfc-signsync-face-drop.md) before any landmark write.
+5. [qad-signsync.md](qad-signsync.md) for the demo bar.
+6. [clr-signsync.md](clr-signsync.md) and [aia-signsync.md](aia-signsync.md) before storing data or calling a model.
+
+Do not add application code from this guide alone until Xander opens that work. Effort: UNCALIBRATED.
+
+This repo's docs were generated with FMD v3.0.1. Do not copy that engine into the repo.
+
+---
+
+## 2. Subagents
+
+None. Fewer than three real spawns. Do not invent a roster.
+
+---
+
+## 3. Stack Currency & Deprecations
+
+### Pinned stack
+
+Versions below were not checked against a registry on 2026-10-12. Do not treat the session date as a version pin.
+
+| Piece | Pin | Verified |
+|-------|-----|----------|
+| Language runtime | [FILL] | not run |
+| Ring client | [FILL] | not run |
+| Landmark library | [FILL] | not run |
+| Bedrock model id | [FILL] | not run |
+| Web framework | [FILL] | not run |
+
+### Deprecations register
+
+| API or habit | Why it is stale here | Use instead |
+|--------------|----------------------|-------------|
+| Two-way doorbell talk | Not in the Partner surface this idea relies on | Resident-side notify only, and that flow is [FILL] |
+| Face or holistic dump stored whole | Breaks the face-drop decision | Hands and body only |
+| Plate reader | Out of the track | Do not add |
+
+Other stale pins: [FILL].
+
+---
+
+## 4. Golden-Path Patterns
+
+### Webhook ack then async work, session note 2026-10-12
+
+Verify the signature, ack, then enqueue. Do not classify inside the request. The Ring timing window is [FILL] until re-checked.
+
+### Face drop before write, session note 2026-10-12
+
+Drop the face set in memory. The first write uses the reduced object. Fail closed if the set cannot be separated.
+
+---
+
+## 5. Conventions & Guardrails
+
+- Secrets never land in git. Location: [FILL].
+- Logs: event kind and ids only. No raw video, no landmark blobs, no visitor names.
+- Sentences come from classifier labels. If labels are empty, do not call the model for a description.
+- No license file is added in this docs cycle.
+- Public copy stays free of internal doc ids. The pitch and the root brand and design pages follow that rule.
+
+---
+
+## 5.1 Brownfield Change Workflow
+
+No product code yet, so there is no change folder. When code exists, a behavior change updates the Draft spec it touches and adds a QAD row. Do not open a parallel product document.
+
+---
+
+## 5.2 Public Surface & Crawler Policy
+
+The repo is expected to become public and to be read by judges.
+
+| Surface | Index? | Note |
+|---------|--------|------|
+| Root README | Yes | Human project page. Keep it free of engine jargon. |
+| docs/ | Yes, as project notes | Draft specs |
+| Demo card | Not a public website yet | No production URL |
+
+robots.txt and a training-bot choice: [FILL]. Record the choice in the regulatory notes before a public deploy. There is no public deploy in this cycle.
+
+---
+
+## 5.3 Engineering Maturity Level
+
+**Current level:** L0 Local Validation, since 2026-10-12, because no CI exists.
+**Next level and its trigger:** L1 when a test for the signature check and the face-key fixture runs in CI.
+**Exists today:** local verification no; tests in CI no; preview per pull request no; deploy on merge no; staged rollout no; rollback none; secrets [FILL]; backup and restore none.
+
+---
+
+## 6. Materialization
+
+Canonical file: docs/build-signsync.md. The root AGENTS.md copy is produced by FMD v3.0.1, which keeps the pointer line first. CLAUDE.md stays a single line that points at AGENTS.md. Do not recreate the old editor-rule copies.
+
+---
+
+## Self-Check
+
+- [x] Read order matches the docs in this slice
+- [x] Versions that were not checked are [FILL]
+- [x] Face-drop and webhook habits are in the deprecations register
+- [x] Public page note does not tell the README to name the engine
