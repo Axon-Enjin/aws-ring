@@ -38,7 +38,7 @@ cp .env.example .env            # optional: RING_ACCESS_TOKEN from the Playgroun
 sh scripts/demo.sh              # http://localhost:8000
 ```
 
-Press **Simulate: Doorbell**. With a Playground token in `.env`, **Watch the door** opens the live view. The offer must be receive-only H264; a VP8 offer gets a 500 from Ring. **What is there** turns a snapshot into one sentence. Captions and that sentence use macOS speech and vision.
+Press **Ring** on the set. With a Playground token in `.env`, the **Tune** knob opens the live view. The offer must be receive-only H264; a VP8 offer gets a 500 from Ring. **Scene** turns a snapshot into one sentence. Captions and that sentence use macOS speech and vision.
 
 `src/ringdoor/` is the FastAPI service. Events share one path: `mock` (no Ring needed), `poll` (Playground token), `webhook` (HMAC-verified, idempotent).
 
