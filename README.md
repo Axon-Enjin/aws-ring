@@ -1,6 +1,6 @@
 # Ring
 
-Track repo for the Amazon Developer Hackathon. This folder is the whole project: rules, sponsor context, the research prompt, and the research report. It does not depend on any other local folder.
+Track repo for the Amazon Developer Hackathon. This folder is the whole project: rules, sponsor context, the research prompt, the research report, and `oss/` (a standalone library for the Open Source mini-challenge). It does not depend on any other local folder.
 
 - **Hackathon:** Build, Ship, Shape: Amazon Developer Hackathon
 - **Deadline:** 23 Oct 2026, 12:00 PM PT
@@ -20,3 +20,4 @@ The report's own formula is about $460k a year (1% of an estimated Ring-reachabl
 | [ORG.md](ORG.md) | Amazon, AWS, and device-team goals, copied so this repo stands alone |
 | [PROMPT.md](PROMPT.md) | Deep-research prompt for this track |
 | [SignSync-AI-Deep-Research-Report.md](SignSync-AI-Deep-Research-Report.md) | Research report and the three pitches |
+| [oss/](oss/) | Standalone Ring webhook receiver and hand-landmark helper (MIT) |
