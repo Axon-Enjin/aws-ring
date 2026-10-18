@@ -4,130 +4,413 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Door Interpreter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=VT323&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:#14110d;
-    --ink:#f4efe6;
-    --muted:#b3a89a;
-    --line:#3c342b;
-    --amber:#ffc857;
-    --panel:#221c16;
-    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
-    --sans:"Avenir Next",Avenir,"Gill Sans","Trebuchet MS",sans-serif;
-  }
   * { box-sizing:border-box; }
-  html, body { height:100%; }
+  html, body { min-height:100%; }
   body {
     margin:0;
-    color:var(--ink);
-    font:18px/1.35 var(--sans);
-    background:
-      radial-gradient(900px 380px at 78% -10%, rgba(255,200,87,.16), transparent 55%),
-      var(--bg);
+    min-height:100vh;
+    display:grid;
+    place-items:center;
+    color:#2a1f18;
+    font:16px/1.35 "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background:radial-gradient(ellipse 80% 70% at 50% 42%, #3c312a, #12100e 72%);
   }
-  body.visitor {
-    background:
-      radial-gradient(1100px 520px at 72% -8%, rgba(255,200,87,.42), transparent 58%),
-      var(--bg);
-  }
-  body.motion {
-    background:
-      radial-gradient(900px 420px at 72% -8%, rgba(232,220,196,.2), transparent 58%),
-      var(--bg);
-  }
-  header, main, #dock, #tonight { padding-left:28px; padding-right:28px; }
-  header {
-    display:flex; justify-content:space-between; align-items:center;
-    padding-top:22px; padding-bottom:8px;
-  }
-  .mark { font-family:var(--serif); font-size:22px; letter-spacing:-.02em; }
-  .mark em { font-style:italic; font-weight:500; }
-  #status {
-    color:var(--muted); font-size:14px; max-width:280px; text-align:right;
-    border:1px solid var(--line); border-radius:999px; padding:6px 12px;
-  }
-  main {
-    display:grid; grid-template-columns:minmax(280px,1.15fr) minmax(260px,.85fr);
-    gap:36px; align-items:center; padding-top:12px; padding-bottom:12px;
-  }
-  .frame {
-    background:#070605;
+  .set { position:relative; width:min(920px, 94vw); padding-bottom:36px; }
+
+  /* Light is straight from above. Raised pieces get a light top edge
+     and a solid lip underneath. Recessed pieces get a dark top edge. */
+  .cabinet {
+    position:relative;
     border-radius:28px;
-    padding:10px;
-    box-shadow:inset 0 0 0 1px #8d6b34, 0 24px 60px rgba(0,0,0,.35);
+    padding:26px 22px 18px;
+    background:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 2px, transparent 2px 9px),
+      linear-gradient(180deg, #c48952 0%, #8d5a34 42%, #6a4126 100%);
+    box-shadow:
+      inset 0 2px 0 rgba(255,226,190,.55),
+      inset 0 -3px 0 rgba(40,20,10,.35),
+      0 16px 0 #3a2416,
+      0 28px 36px rgba(0,0,0,.45);
+  }
+  .cabinet::after {
+    content:"DOOR INTERPRETER";
+    position:absolute; top:14px; left:50%; transform:translateX(-50%);
+    font:11px/1 "Helvetica Neue", sans-serif; font-weight:700; letter-spacing:.28em;
+    color:rgba(40,24,14,.55); text-shadow:0 1px 0 rgba(255,255,255,.25);
+    pointer-events:none;
+  }
+  .tv-face {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 132px;
+    gap:14px;
+    align-items:stretch;
+    margin-top:8px;
+  }
+
+  /* —— CRT —— */
+  .frame {
+    position:relative;
+    background:#141414;
+    border-radius:16px;
+    padding:12px;
+    box-shadow:
+      inset 0 8px 10px rgba(0,0,0,.55),
+      inset 0 -1px 0 rgba(255,255,255,.14);
+  }
+  body.visitor .frame { animation:tvshake .5s ease; }
+  @keyframes tvshake {
+    0%, 100% { transform:translate(0); }
+    20% { transform:translate(-4px, 1px) rotate(-.3deg); }
+    40% { transform:translate(3px, -1px) rotate(.25deg); }
+    60% { transform:translate(-2px, 0); }
+  }
+  .bezel {
+    position:relative;
+    border-radius:12px;
+    padding:8px;
+    background:linear-gradient(180deg, #9a9a9a, #3a3a3a 55%, #1c1c1c);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 0 rgba(0,0,0,.45);
+  }
+  .tube {
+    position:relative;
+    border-radius:10px;
+    overflow:hidden;
+    aspect-ratio:4/3;
+    background:#111;
+    box-shadow:inset 0 0 40px rgba(0,0,0,.45);
   }
   video {
-    display:block; width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:20px;
+    position:absolute; inset:0; z-index:1;
+    width:100%; height:100%; object-fit:cover;
+    border-radius:inherit;
+    filter:contrast(1.08) saturate(1.12) brightness(.95);
+  }
+  .standby {
+    position:absolute; inset:0; z-index:0;
+    display:grid; place-content:center; text-align:center; gap:8px;
     background:
-      radial-gradient(circle at 50% 42%, #3a2e22 0, #120e0b 62%);
+      radial-gradient(ellipse 70% 55% at 50% 45%, #4a4a4a, #0c0c0c 70%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 3px);
   }
-  .kicker {
-    margin:0 0 10px; color:var(--muted); font-size:12px; letter-spacing:.22em; text-transform:uppercase;
+  .standby::before {
+    content:""; position:absolute; inset:0; opacity:.35;
+    background:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+    animation:snow .15s steps(4) infinite;
   }
+  @keyframes snow { to { transform:translate(2%, 1%); } }
+  .standby p {
+    position:relative; z-index:1; margin:0;
+    font-family:"VT323", monospace; font-size:28px; letter-spacing:.12em;
+    color:#c8c8c8; text-shadow:0 0 8px rgba(255,255,255,.4), 2px 2px 0 #000;
+  }
+  .frame.live .standby { opacity:0; visibility:hidden; }
+  .crt-fx {
+    position:absolute; inset:0; z-index:4; pointer-events:none; border-radius:inherit;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px),
+      radial-gradient(ellipse 85% 75% at 50% 48%, transparent 55%, rgba(0,0,0,.55) 100%);
+    mix-blend-mode:multiply;
+  }
+  .crt-fx::after {
+    content:""; position:absolute; inset:0; border-radius:inherit;
+    background:linear-gradient(125deg, transparent 40%, rgba(255,255,255,.12) 48%, transparent 56%);
+    background-size:200% 100%;
+    animation:glare 6s ease-in-out infinite;
+  }
+  @keyframes glare { 0%, 70% { background-position:120% 0; } 100% { background-position:-30% 0; } }
+  .live-tag {
+    position:absolute; top:10px; right:12px; z-index:5;
+    font-family:"VT323", monospace; font-size:22px; letter-spacing:.08em;
+    color:#ff4444; opacity:0; text-shadow:0 0 10px rgba(255,0,0,.8);
+    transition:opacity .3s;
+  }
+  .frame.live .live-tag { opacity:1; animation:blink .9s step-end infinite; }
+  @keyframes blink { 50% { opacity:.35; } }
+
+  .broadcast {
+    position:absolute; left:0; right:0; bottom:0; z-index:3;
+    padding:28px 14px 14px;
+    background:linear-gradient(180deg, transparent, rgba(0,0,0,.82) 45%);
+    text-align:center;
+    pointer-events:none;
+  }
+  .ch {
+    margin:0 0 4px;
+    font-family:"VT323", monospace; font-size:20px; letter-spacing:.2em;
+    color:#9cdc9c; text-shadow:0 0 6px rgba(100,220,100,.5);
+  }
+  body.visitor .ch { color:#ffb347; text-shadow:0 0 10px rgba(255,150,0,.7); }
   #hero {
-    margin:0; font-family:var(--serif); font-weight:560; letter-spacing:-.03em;
-    font-size:clamp(40px, 5.4vw, 76px); line-height:.96;
+    margin:0;
+    font-family:"Archivo Black", sans-serif;
+    font-size:clamp(18px, 4.5vw, 26px);
+    line-height:1.15;
+    color:#f0f0f0;
+    text-transform:uppercase;
+    text-shadow:2px 2px 0 #000, -1px -1px 0 #000, 0 0 20px rgba(255,255,255,.25);
   }
-  #hero.visitor { color:#1a1203; background:var(--amber); padding:10px 16px 14px; animation:flash .7s 5; }
-  #hero.motion { color:var(--ink); }
-  @keyframes flash { 50% { background:transparent; color:var(--amber); } }
+  #hero.visitor {
+    color:#ffe066;
+    animation:flashin .45s ease both;
+    text-shadow:2px 2px 0 #000, 0 0 24px rgba(255,200,0,.9);
+  }
+  @keyframes flashin {
+    0% { transform:scale(1.08); filter:brightness(2); }
+    100% { transform:none; filter:none; }
+  }
   #caption {
-    margin:22px 0 0; font-size:clamp(26px, 3vw, 40px); font-weight:650; letter-spacing:-.03em; line-height:1.15;
+    margin:8px auto 0; max-width:95%;
+    font-family:"VT323", monospace; font-size:clamp(20px, 4vw, 26px);
+    line-height:1.25; color:#fff;
+    background:rgba(0,0,0,.75);
+    padding:4px 10px;
+    box-shadow:0 0 0 2px rgba(255,255,255,.15);
+    display:inline-block;
   }
   #caption:empty { display:none; }
-  #scene { margin:14px 0 0; color:#ddd2c3; font-size:20px; }
+  #caption.pop { animation:pop .35s ease; }
+  @keyframes pop { 0% { transform:scale(.94); opacity:.4; } }
+  #scene {
+    margin:6px 0 0;
+    font-family:"VT323", monospace; font-size:20px; color:#d4d4d4;
+    text-shadow:1px 1px 0 #000;
+  }
   #scene:empty { display:none; }
-  #dock { display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding-bottom:8px; }
-  #dev { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-  button { font:inherit; cursor:pointer; }
-  button.act {
-    border:0; border-radius:999px; padding:12px 18px; background:var(--ink); color:#1a140c; font-weight:650;
+
+  /* —— Control panel —— */
+  .controls {
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    padding:12px 10px;
+    border-radius:12px;
+    background:linear-gradient(180deg, #f4eee6, #cfc6b8);
+    box-shadow:
+      inset 0 1px 0 #fff,
+      inset 0 -2px 0 rgba(0,0,0,.12),
+      0 2px 0 rgba(60,40,24,.18);
   }
-  button.ghost { background:transparent; color:var(--ink); box-shadow:inset 0 0 0 1.5px #6a5e51; }
-  button.demo {
-    border:0; background:transparent; color:var(--muted); font-size:15px;
-    text-decoration:underline; text-underline-offset:3px; padding:8px 2px;
+  .keys { display:flex; flex-direction:column; gap:8px; width:100%; margin-top:4px; }
+  .key {
+    width:100%;
+    font:inherit; cursor:pointer; border:0;
+    border-radius:7px; padding:8px 4px;
+    font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+    color:#2a241c;
+    background:linear-gradient(180deg, #fffdf8, #ddd4c6 46%, #b7ab9c);
+    box-shadow:inset 0 1px 0 #fff, 0 3px 0 #5c5148;
+    text-shadow:0 1px 0 rgba(255,255,255,.6);
   }
-  #tonight { padding-bottom:28px; }
-  #tonight h2 {
-    margin:18px 0 0; color:var(--muted); font-size:12px; font-weight:600;
-    letter-spacing:.18em; text-transform:uppercase;
+  .key:active {
+    transform:translateY(3px);
+    box-shadow:inset 0 3px 5px rgba(0,0,0,.35), 0 1px 0 #5c5148;
   }
-  ul { list-style:none; margin:8px 0 0; padding:0; max-width:720px; }
-  li { display:flex; gap:12px; align-items:baseline; padding:10px 0; border-top:1px solid var(--line); }
-  .dot { width:8px; height:8px; border-radius:50%; background:var(--muted); flex:none; }
-  .visitor .dot { background:var(--amber); }
-  .motion .dot { background:#e7d7c3; }
-  li div { flex:1; display:flex; justify-content:space-between; gap:16px; align-items:baseline; }
-  time { flex:none; }
-  time { color:var(--muted); font-size:14px; }
-  @media (max-width:800px) {
-    header, main, #dock, #tonight { padding-left:16px; padding-right:16px; }
-    main { grid-template-columns:1fr; gap:22px; }
-    #hero { font-size:44px; }
+  .key.gold {
+    background:linear-gradient(180deg, #ffe9b0, #e39a14 48%, #a86a00);
+    color:#3a2200;
+    box-shadow:inset 0 1px 0 #fff6d8, 0 3px 0 #6a4208;
   }
-  @media (prefers-reduced-motion: reduce) { #hero.visitor { animation:none; } }
+  .key.gold:active { box-shadow:inset 0 3px 5px rgba(80,40,0,.4), 0 1px 0 #6a4208; }
+  .grille {
+    width:100%; height:28px; border-radius:4px;
+    background:
+      repeating-linear-gradient(180deg, #8a8075 0 2px, transparent 2px 5px),
+      linear-gradient(180deg, #b5aa9c, #8f8578);
+    box-shadow:inset 0 3px 4px rgba(0,0,0,.35), inset 0 -1px 0 rgba(255,255,255,.25);
+  }
+  .grille.tall { height:36px; flex:1; min-height:48px; }
+  .knob-wrap { position:relative; text-align:center; }
+  .knob {
+    width:52px; height:52px; border-radius:50%; border:0; cursor:pointer;
+    background:
+      radial-gradient(circle at 38% 32%, #fff, #e8dfd0 25%, #a89888 60%, #6a5c50);
+    box-shadow:inset 0 2px 3px rgba(255,255,255,.85), inset 0 -3px 4px rgba(0,0,0,.25), 0 3px 0 #5a4c42;
+    position:relative;
+  }
+  .knob.sm { width:42px; height:42px; }
+  .knob::after {
+    content:""; position:absolute; left:50%; top:8px; width:3px; height:14px;
+    margin-left:-1.5px; background:#4a4038; border-radius:2px;
+    box-shadow:0 1px 0 rgba(255,255,255,.3);
+    transform:rotate(-35deg); transform-origin:50% 85%;
+  }
+  .knob:active { transform:scale(.96); }
+  .knob-label {
+    display:block; margin-top:4px;
+    font-size:9px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+    color:#5c5248;
+  }
+  .power {
+    display:flex; align-items:center; gap:8px; margin-top:auto; padding-top:6px;
+    font-size:11px; font-weight:700; letter-spacing:.04em; color:#5c5248;
+    text-transform:uppercase;
+  }
+  .led {
+    width:10px; height:10px; border-radius:50%; flex:none;
+    background:radial-gradient(circle at 40% 35%, #6a6a6a, #2a2a2a);
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.6);
+    animation:poweridle 2.5s ease-in-out infinite;
+  }
+  body.visitor .led, body.motion .led {
+    background:radial-gradient(circle at 40% 35%, #fff, #ffcc00 45%, #cc6600);
+    box-shadow:0 0 12px 2px rgba(255,160,0,.9);
+    animation:none;
+  }
+  @keyframes poweridle { 50% { opacity:.45; } }
+  #status {
+    flex:1; min-width:0; line-height:1.2; font-size:10px;
+    overflow:hidden; text-overflow:ellipsis;
+  }
+  .wave {
+    display:flex; align-items:flex-end; justify-content:center; gap:3px;
+    width:100%; height:20px;
+  }
+  .wave span {
+    width:4px; border-radius:2px;
+    background:linear-gradient(180deg, #5a5048, #3a322c);
+    height:5px; opacity:.5;
+    animation:vu 2.2s ease-in-out infinite;
+  }
+  body.visitor .wave span {
+    background:linear-gradient(180deg, #ffb000, #cc5500);
+    opacity:.85; animation:vu .55s ease-in-out infinite;
+  }
+  .wave span:nth-child(2) { animation-delay:.07s; }
+  .wave span:nth-child(3) { animation-delay:.14s; }
+  .wave span:nth-child(4) { animation-delay:.21s; }
+  .wave span:nth-child(5) { animation-delay:.28s; }
+  .wave.speak span { animation-duration:.3s; }
+  @keyframes vu { 50% { height:16px; } }
+
+  /* —— Legs —— */
+  .legs {
+    display:flex; justify-content:space-between;
+    padding:0 92px; margin-top:16px;
+  }
+  .leg {
+    width:16px; height:48px;
+    background:linear-gradient(180deg, #6a4126, #3a2416);
+    border-radius:0 0 4px 4px;
+  }
+  .leg:first-child { transform:skewX(8deg); }
+  .leg:last-child { transform:skewX(-8deg); }
+  .floor-shadow {
+    position:absolute; left:12%; right:12%; bottom:0; height:18px;
+    border-radius:50%;
+    background:radial-gradient(ellipse at center, rgba(0,0,0,.4), transparent 72%);
+  }
+
+  /* —— Log, recessed into the cabinet —— */
+  .log-well {
+    margin-top:16px;
+    padding:10px 12px 12px;
+    border-radius:14px;
+    background:linear-gradient(180deg, #2a1c14, #1a120e);
+    box-shadow:inset 0 6px 8px rgba(0,0,0,.4), inset 0 -1px 0 rgba(255,220,180,.18);
+  }
+  .log-well h2 {
+    margin:0 0 6px;
+    font-family:"VT323", monospace; font-size:18px; letter-spacing:.16em;
+    color:#c4a882; text-transform:uppercase;
+  }
+  ul {
+    list-style:none; margin:0; padding:4px 6px;
+    border-radius:8px;
+    background:#070605;
+    box-shadow:inset 0 3px 6px rgba(0,0,0,.6);
+    max-height:92px; overflow-y:auto;
+  }
+  ul:empty { display:none; }
+  .log-empty {
+    margin:0; padding:8px; text-align:center;
+    font-family:"VT323", monospace; font-size:20px; color:#6a5c50;
+  }
+  #log:not(:empty) + .log-empty { display:none; }
+  li {
+    display:flex; gap:10px; align-items:center; padding:10px 12px;
+    color:#e8e0d4; border-top:1px solid rgba(255,255,255,.06);
+    font-size:14px;
+    animation:log .35s ease both;
+  }
+  @keyframes log { from { opacity:0; transform:translateY(-6px); } }
+  li:first-child { border-top:0; }
+  .dot {
+    width:8px; height:8px; border-radius:50%; flex:none;
+    background:#ffb000; box-shadow:0 0 8px rgba(255,160,0,.7);
+  }
+  .motion .dot { background:#5ec8e8; box-shadow:0 0 8px rgba(80,200,230,.7); }
+  li div { flex:1; min-width:0; display:flex; justify-content:space-between; gap:12px; align-items:baseline; }
+  time { flex:none; color:#8a8078; font-family:"VT323", monospace; font-size:18px; }
+
+  @media (max-width:720px) {
+    .tv-face { grid-template-columns:1fr; }
+    .controls { flex-direction:row; flex-wrap:wrap; justify-content:center; }
+    .keys { flex-direction:row; flex-wrap:wrap; width:auto; }
+    .key { width:auto; padding:8px 12px; }
+    .grille.tall { display:none; }
+    .legs { padding:0 36px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .standby::before, .crt-fx::after, .frame.live .live-tag, .wave span, #hero.visitor, #caption.pop, .led, body.visitor .frame, li { animation:none; }
+  }
 </style>
 </head>
 <body>
-<header>
-  <div class="mark">Door <em>Interpreter</em></div>
-  <span id="status">connecting…</span>
-</header>
-<main>
-  <div class="frame"><video id="view" autoplay playsinline muted></video></div>
-  <section id="read">
-    <p class="kicker">At the door</p>
-    <h2 id="hero" aria-live="assertive">Waiting for the door…</h2>
-    <p id="caption" aria-live="polite"></p>
-    <p id="scene" aria-live="polite"></p>
-  </section>
-</main>
-<div id="dock"><div id="dev"></div></div>
-<section id="tonight">
-  <h2>Tonight</h2>
-  <ul id="log"></ul>
-</section>
+<div class="set">
+  <div class="cabinet">
+      <div class="tv-face">
+        <div class="frame" id="screen">
+          <div class="bezel">
+            <div class="tube">
+              <div class="standby" aria-hidden="true"><p>NO SIGNAL</p></div>
+              <video id="view" autoplay playsinline muted></video>
+              <div class="crt-fx" aria-hidden="true"></div>
+              <span class="live-tag">● ON AIR</span>
+              <div class="broadcast">
+                <p class="ch">CH 03 · FRONT DOOR</p>
+                <h2 id="hero" aria-live="assertive">Waiting for the door…</h2>
+                <p id="caption" aria-live="polite"></p>
+                <p id="scene" aria-live="polite"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <aside class="controls" aria-label="Television controls">
+          <div class="grille"></div>
+          <div class="knob-wrap">
+            <button type="button" class="knob" id="knob-tune" title="Tune in live view"></button>
+            <span class="knob-label">Tune</span>
+          </div>
+          <div class="grille tall"></div>
+          <div class="wave" id="wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+          <div class="knob-wrap">
+            <button type="button" class="knob sm" id="knob-vol" title="Mute or listen"></button>
+            <span class="knob-label">Volume</span>
+          </div>
+          <div class="grille"></div>
+          <div class="keys">
+            <button type="button" class="key gold" id="btn-ring">Ring</button>
+            <button type="button" class="key" id="btn-motion">Motion</button>
+            <button type="button" class="key" id="btn-scene">Scene</button>
+            <button type="button" class="key" id="clear">Clear</button>
+          </div>
+          <div class="power">
+            <span class="led" aria-hidden="true"></span>
+            <span id="status">connecting…</span>
+          </div>
+        </aside>
+      </div>
+      <div class="log-well" id="tonight">
+        <h2>Tonight</h2>
+        <ul id="log"></ul>
+        <p class="log-empty">Static only — press Ring.</p>
+      </div>
+    </div>
+    <div class="legs" aria-hidden="true"><span class="leg"></span><span class="leg"></span></div>
+    <div class="floor-shadow" aria-hidden="true"></div>
+</div>
 <script>
 const hero = document.getElementById('hero');
 const log = document.getElementById('log');
@@ -135,11 +418,26 @@ const st = document.getElementById('status');
 const view = document.getElementById('view');
 const caption = document.getElementById('caption');
 const scene = document.getElementById('scene');
+const screen = document.getElementById('screen');
+const wave = document.getElementById('wave');
 let pc = null;
 let sessionUrl = null;
 let capTimer = null;
 let hearTimer = null;
 let audioCtx = null;
+
+function setLive(on) {
+  screen.classList.toggle('live', on);
+}
+
+function popCaption() {
+  caption.classList.remove('pop');
+  void caption.offsetWidth;
+  caption.classList.add('pop');
+  wave.classList.add('speak');
+  clearTimeout(popCaption.t);
+  popCaption.t = setTimeout(() => wave.classList.remove('speak'), 500);
+}
 
 function show(a) {
   document.body.className = a.level;
@@ -151,10 +449,11 @@ function show(a) {
   const dot = document.createElement('span');
   dot.className = 'dot';
   const body = document.createElement('div');
-  body.textContent = a.headline + (a.detail ? ' — ' + a.detail : '');
+  const words = document.createElement('span');
+  words.textContent = a.headline + (a.detail ? ' — ' + a.detail : '');
   const t = document.createElement('time');
   t.textContent = new Date(a.created_ms).toLocaleTimeString();
-  body.appendChild(t);
+  body.append(words, t);
   li.append(dot, body);
   log.prepend(li);
   if (a.level === 'visitor') startLive();
@@ -238,7 +537,7 @@ function listenTo(track) {
     if (energy / merged.length < 0.00008) return;
     fetch('/api/captions', { method: 'POST', headers: { 'Content-Type': 'audio/wav' }, body: wavBlob(merged, rate) })
       .then(r => r.json())
-      .then(data => { if (data.text) caption.textContent = data.text; })
+      .then(data => { if (data.text) { caption.textContent = data.text; popCaption(); } })
       .catch(() => {});
   };
   const silent = ctx.createGain();
@@ -275,6 +574,7 @@ async function stopLive() {
   if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null; }
   if (pc) { pc.close(); pc = null; }
   view.srcObject = null;
+  setLive(false);
   if (sessionUrl) {
     const url = sessionUrl;
     sessionUrl = null;
@@ -290,19 +590,19 @@ async function startLive() {
   if (pc) return;
   if (!audioCtx) audioCtx = new AudioContext();
   audioCtx.resume().catch(() => {});
-  st.textContent = 'opening the door…';
+  st.textContent = 'tuning…';
   const conn = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
   pc = conn;
   const video = conn.addTransceiver('video', { direction: 'recvonly' });
   conn.addTransceiver('audio', { direction: 'recvonly' });
   if (!preferH264(video)) {
-    st.textContent = 'This browser has no H264 encoder. Chrome or Safari can open the door.';
+    st.textContent = 'Need H264 — try Safari or Chrome';
     pc = null;
     conn.close();
     return;
   }
   conn.ontrack = (e) => {
-    if (e.streams[0]) view.srcObject = e.streams[0];
+    if (e.streams[0]) { view.srcObject = e.streams[0]; setLive(true); }
     if (e.track && e.track.kind === 'audio') listenTo(e.track);
     if (e.track && e.track.kind === 'video') setTimeout(describeDoor, 2500);
   };
@@ -318,45 +618,43 @@ async function startLive() {
     if (!res.ok) throw new Error(data.detail || 'Live view failed');
     sessionUrl = data.session_url;
     await conn.setRemoteDescription({ type: 'answer', sdp: data.sdp });
-    st.textContent = 'at the door';
-    capTimer = setTimeout(() => { stopLive(); st.textContent = 'live view ended'; }, 55000);
+    st.textContent = 'on air';
+    capTimer = setTimeout(() => { stopLive(); st.textContent = 'sign-off'; }, 55000);
   } catch (err) {
-    st.textContent = /credential/i.test(err.message || '') ? 'Needs a Playground token' : (err.message || 'Live view failed');
+    st.textContent = /credential/i.test(err.message || '') ? 'No token' : (err.message || 'Tune failed');
     await stopLive();
   }
 }
 
 const es = new EventSource('/stream');
-es.onopen = () => { if (!pc) st.textContent = 'live'; };
-es.onerror = () => { if (!pc) st.textContent = 'reconnecting…'; };
+es.onopen = () => { if (!pc) st.textContent = 'standby'; };
+es.onerror = () => { if (!pc) st.textContent = 'no carrier'; };
 es.onmessage = e => {
   const m = JSON.parse(e.data);
   if (m.kind === 'alert') show(m);
-  if (m.kind === 'caption' && m.text) caption.textContent = m.text;
+  if (m.kind === 'caption' && m.text) { caption.textContent = m.text; popCaption(); }
   if (m.kind === 'scene' && m.text) scene.textContent = m.text;
 };
-window.addEventListener('pagehide', () => { if (sessionUrl) navigator.sendBeacon('/api/live/close', new Blob([JSON.stringify({ session_url: sessionUrl })], { type: 'application/json' })); });
 
-const watch = document.createElement('button');
-watch.className = 'act';
-watch.textContent = 'Watch the door';
-watch.onclick = () => startLive();
-const what = document.createElement('button');
-what.className = 'act ghost';
-what.textContent = 'What is there';
-what.onclick = () => describeDoor();
-const listen = document.createElement('button');
-listen.className = 'act ghost';
-listen.textContent = 'Listen';
-listen.onclick = () => { view.muted = !view.muted; listen.textContent = view.muted ? 'Listen' : 'Mute'; };
-document.getElementById('dev').append(watch, what, listen);
-[['Ring the bell','button_press'],['Motion','motion_detected']].forEach(([label, kind]) => {
-  const b = document.createElement('button');
-  b.className = 'demo';
-  b.textContent = label;
-  b.onclick = () => fetch('/dev/mock/' + kind, { method: 'POST' });
-  document.getElementById('dev').appendChild(b);
+window.addEventListener('pagehide', () => {
+  if (sessionUrl) navigator.sendBeacon('/api/live/close', new Blob([JSON.stringify({ session_url: sessionUrl })], { type: 'application/json' }));
 });
+
+const listen = { muted: true };
+function toggleMute() {
+  view.muted = listen.muted = !listen.muted;
+  document.getElementById('knob-vol').style.transform = listen.muted ? '' : 'rotate(45deg)';
+}
+document.getElementById('knob-vol').onclick = toggleMute;
+document.getElementById('knob-tune').onclick = () => startLive();
+
+document.getElementById('btn-ring').onclick = () => fetch('/dev/mock/button_press', { method: 'POST' });
+document.getElementById('btn-motion').onclick = () => fetch('/dev/mock/motion_detected', { method: 'POST' });
+document.getElementById('btn-scene').onclick = () => describeDoor();
+document.getElementById('clear').onclick = async () => {
+  await fetch('/api/log/clear', { method: 'POST' });
+  log.replaceChildren();
+};
 </script>
 </body>
 </html>

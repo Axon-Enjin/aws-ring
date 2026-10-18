@@ -86,6 +86,11 @@ def create_app(
     async def recent():
         return bus.history
 
+    @app.post("/api/log/clear")
+    async def clear_log():
+        bus.clear()
+        return {"status": "cleared"}
+
     @app.get("/stream")
     async def stream():
         q = bus.subscribe()

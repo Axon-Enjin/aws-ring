@@ -92,6 +92,9 @@ class EventBus:
             self._seen = set(list(self._seen)[-2500:])
         return False
 
+    def clear(self) -> None:
+        self.history.clear()
+
     def publish(self, message: Dict[str, Any]) -> None:
         self.history.append(message)
         del self.history[: -self._max]

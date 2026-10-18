@@ -133,6 +133,17 @@ async def test_caption_and_scene_publish_on_the_alert_stream():
     assert kinds == ["caption", "scene"]
 
 
+async def test_clear_log_drops_history():
+    app, c = await _client(Settings(source="mock"))
+    assert (await c.post("/dev/mock/button_press")).status_code == 200
+    assert app.state.bus.history
+    cleared = await c.post("/api/log/clear")
+    assert cleared.json()["status"] == "cleared"
+    assert app.state.bus.history == []
+    page = (await c.get("/")).text
+    assert 'id="clear"' in page
+
+
 async def test_live_offer_needs_credentials():
     _, c = await _client(Settings(source="mock"))
     denied = await c.post("/api/live/offer", content=H264_OFFER.encode())
