@@ -16,6 +16,8 @@ The research report recommended SignSync. The Ring docs and the Playground devic
 
 Door Interpreter is a FastAPI service in `src/ringdoor/`. Every doorbell event becomes the same `DoorEvent`, regardless of source. A small pipeline turns that event into an alert. The browser subscribes to those alerts and, on its own, opens the live picture, captions, and scene sentence.
 
+The HTTP adapter depends on ports (`DoorGateway`, speech, vision), not on Ring or macOS. `composition.py` is the only place that chooses the concrete adapters. A change to the Partner API, the on-device speech script, or the sentence list stays inside that adapter. Alert rules and routes do not import it. Ring HTTP errors are translated to `DoorError` before they leave the Ring adapter.
+
 ```mermaid
 flowchart TB
   subgraph sources [Event sources]
@@ -62,23 +64,29 @@ The page does not wait on the server for media. After a visitor alert it builds 
 Captions and the scene sentence are separate requests, both published back onto the same bus:
 
 - The browser buffers visitor audio, downsamples it to 16 kHz WAV, and posts it to `/api/captions`. `scripts/transcribe.js` uses macOS speech recognition.
-- `/api/scene/ring` downloads a Ring snapshot when credentials exist. Otherwise the page posts a JPEG of the current frame to `/api/scene`. `scripts/describe.js` returns labels, and `scene.py` maps those labels onto a fixed sentence list. A package outranks a person. Names are never produced.
+- `/api/scene/ring` downloads a Ring snapshot when credentials exist. Otherwise the page posts a JPEG of the current frame to `/api/scene`. `scripts/describe.js` returns labels, and `domain/scene_policy.py` maps those labels onto a fixed sentence list. A package outranks a person. Names are never produced.
 
-| Module | Responsibility |
-|---|---|
-| `config.py` | Environment: source, tokens, HMAC key, device id, poll interval |
-| `ring_client.py` | Partner API client. Playground access token or OAuth refresh. Devices, history, snapshot, WHEP |
-| `events.py` | `DoorEvent`, webhook and history normalization, in-memory `EventBus` with replay |
-| `webhook.py` | HMAC verification of the raw body |
-| `sources.py` | Mock envelopes and the history poller |
-| `pipeline.py` | `Alert` model and `RuleStage` |
-| `live.py` | SDP checks and session-URL allowlist |
-| `captions.py`, `scene.py`, `mac.py` | Local speech and vision adapters |
-| `main.py` | HTTP routes and process lifespan |
-| `static/index.html` | Retro television UI: alert, live picture, caption, scene line, tonight log |
+| Layer | Module | Responsibility |
+|---|---|---|
+| Domain | `domain/models.py` | `DoorEvent` and webhook/history normalization |
+| Domain | `domain/alerts.py` | `Alert`, `RuleStage` |
+| Domain | `domain/scene_policy.py` | Fixed scene sentences. No names |
+| Domain | `domain/sdp.py` | Receive-only H264 check and session-URL allowlist |
+| Domain | `domain/ports.py` | `DoorGateway`, speech, vision, and `DoorError` |
+| Application | `application/ingest.py` | Event to alert messages |
+| Application | `application/live.py` | Open, close, snapshot, device list |
+| Application | `application/reading.py` | Caption and scene use cases |
+| Adapter | `adapters/ring/` | Partner API client and history poll |
+| Adapter | `adapters/mac/` | macOS speech and vision via `osascript` |
+| Adapter | `adapters/memory/bus.py` | In-memory `EventBus` with replay |
+| Adapter | `adapters/mock/source.py` | Synthetic v1.1 envelopes |
+| Adapter | `adapters/http/` | Routes and HMAC verification |
+| Wiring | `composition.py` | Binds ports to adapters. `main.py` only starts the process |
+| UI | `static/index.html` | Retro television: alert, live picture, caption, scene line, tonight log |
 
 | Method | Path | Purpose |
 |---|---|---|
+| `GET` | `/health` | Process check. Reports the configured event source |
 | `GET` | `/` | Television page |
 | `GET` | `/stream` | Server-sent events. Replays history, then live `event`, `alert`, `caption`, and `scene` messages |
 | `GET` | `/api/recent` | Current bus history |

@@ -1,10 +1,4 @@
-"""Turn a WAV of the visitor's voice into a caption line."""
-from __future__ import annotations
+"""Compatibility imports. Speech recognition is the macOS adapter."""
+from .adapters.mac.speech import transcribe_wav
 
-from .mac import run_script
-
-
-def transcribe_wav(wav: bytes) -> str:
-    if len(wav) < 44:
-        return ""
-    return " ".join(run_script("transcribe.js", wav, ".wav", timeout=30).split())
+__all__ = ["transcribe_wav"]
